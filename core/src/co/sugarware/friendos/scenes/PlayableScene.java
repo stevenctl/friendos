@@ -1,0 +1,176 @@
+package co.sugarware.friendos.scenes;
+
+import co.sugarware.friendos.entities.Entity;
+import co.sugarware.friendos.entities.PhysicsObject;
+import co.sugarware.friendos.entities.Player;
+import co.sugarware.friendos.entities.collisions.FixtureDelegateContactListener;
+import co.sugarware.friendos.input.SimpleKeyboardController;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.World;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static co.sugarware.friendos.entities.Player.RAMSEY_SPRITE;
+import static co.sugarware.friendos.entities.Player.TRENT_SPRITE;
+
+public class PlayableScene implements Scene {
+
+    private static final int NUM_PLAYERS = 2;
+
+    // physics config
+    private static final float GRAVITY = -100f;
+
+    // viewport config
+    private static final float CAMERA_HEIGHT = 100;
+    private static final float CAMERA_WIDTH = CAMERA_HEIGHT * ((Gdx.graphics.getWidth() / 2f) / (float) Gdx.graphics.getHeight());
+
+    // game state
+    private List<Entity> entities;
+    private Player[] players;
+    private World world;
+
+    // map
+    private TiledMap map;
+
+    // rendering
+    private Matrix4 identity = new Matrix4();
+    private OrthographicCamera[] cameras;
+    private FrameBuffer[] fbos;
+    private SpriteBatch sb;
+    private TiledMapRenderer mapRenderer;
+    private Box2DDebugRenderer debugRenderer;
+
+    public PlayableScene() {
+        entities = new ArrayList<>();
+
+        world = new World(new Vector2(0, GRAVITY), false);
+        world.setContactListener(new FixtureDelegateContactListener());
+
+        // setup each player
+        players = new Player[NUM_PLAYERS];
+        cameras = new OrthographicCamera[NUM_PLAYERS];
+        fbos = new FrameBuffer[NUM_PLAYERS];
+        InputMultiplexer input = new InputMultiplexer();
+        Gdx.input.setInputProcessor(input);
+
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            players[i] = new Player(new Vector2(11 * (i + 1), 70), (i + 1) % 2 == 1 ? RAMSEY_SPRITE : TRENT_SPRITE);
+
+            // register in scene
+            entities.add(players[i]);
+
+            // register inputs
+            input.addProcessor(new SimpleKeyboardController(players[i], i));
+
+            // setup camera
+            OrthographicCamera cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
+            cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);
+            cameras[i] = cam;
+
+            // setup split-screen fbo
+            fbos[i] = new FrameBuffer(Pixmap.Format.RGBA8888, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight(), false);
+        }
+
+
+        map = new TmxMapLoader().load("tilemaps/test.tmx");
+        TiledMapLoader.loadCollisionBodies(map, world);
+        entities.addAll(TiledMapLoader.loadEntities(map));
+        mapRenderer = new OrthogonalTiledMapRenderer(map, 0.5f);
+
+
+        sb = new SpriteBatch();
+
+        debugRenderer = new Box2DDebugRenderer();
+        debugRenderer.setDrawBodies(true);
+        debugRenderer.setDrawVelocities(false);
+
+        for (Entity e : entities) {
+            if (e instanceof PhysicsObject) {
+                ((PhysicsObject) e).setupPhysics(world);
+            }
+        }
+    }
+
+    @Override
+    public void update(float delta) {
+        world.step(delta, 20, 20);
+        for (Entity e : entities) {
+            e.update(delta);
+        }
+
+        for (int i = 0; i < players.length; i++) {
+            OrthographicCamera cam = cameras[i];
+            Player player = players[i];
+
+            cam.position.set(
+                    Math.max(cam.viewportWidth / 2, player.getPosition().x),
+                    Math.max(cam.viewportHeight /2 , player.getPosition().y),
+                    0
+            );
+            cam.update();
+        }
+    }
+
+
+    @Override
+    public void draw(float delta) {
+        // Render each camera to a separate frame buffer
+        for (int i = 0; i < cameras.length; i++) {
+            FrameBuffer fbo = fbos[i];
+            OrthographicCamera cam = cameras[i];
+
+            fbo.begin();
+
+            Gdx.gl.glClearColor(i + 1, i, i - 1, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            mapRenderer.setView(cam);
+            mapRenderer.render();
+
+            sb.setProjectionMatrix(cam.combined);
+            sb.begin();
+            for (Entity e : entities) {
+                e.draw(sb, delta);
+            }
+            sb.end();
+
+            debugRenderer.render(world, cam.combined);
+            fbo.end();
+        }
+
+        // render each frame buffer as a split-screen
+        sb.setProjectionMatrix(identity);
+        sb.begin();
+        for (int i = 0; i < fbos.length; i++) {
+            sb.draw(
+                    fbos[i].getColorBufferTexture(),
+                    -1 + i, 1f, 1, -2
+            );
+        }
+        sb.end();
+
+    }
+
+    @Override
+    public void dispose() {
+        for (Entity e : entities) {
+            e.dispose();
+        }
+        sb.dispose();
+        debugRenderer.dispose();
+        world.dispose();
+    }
+
+}
