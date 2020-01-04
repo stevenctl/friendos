@@ -17,7 +17,7 @@ public class Player implements Entity, PhysicsObject, Controllable {
     public static final String RAMSEY_SPRITE = "sprites/ramsey.json";
     public static final String TRENT_SPRITE = "sprites/trent.json";
 
-    private static final int WIDTH = 20, HEIGHT = 20;
+    private static final int WIDTH = 20 / 2, HEIGHT = 20 / 2;
     private final AnimatedSprite sprite;
 
     // physics parameters
@@ -42,6 +42,7 @@ public class Player implements Entity, PhysicsObject, Controllable {
     private static final float EXTENDED_JUMP_SECONDS = 0.2f;
     private boolean jumping = false;
     private float extendedJumpTimer;
+    private float climbCooldown; // used to prevent sticking to the wall when climbing
 
     public Player(Vector2 startPosition, String sprite) {
         this.startPosition = startPosition;
@@ -83,9 +84,6 @@ public class Player implements Entity, PhysicsObject, Controllable {
         body.createFixture(fixtureDef).setUserData(floorSensor);
 
         // Side Sensors
-        fixtureDef.isSensor = false;
-        fixtureDef.friction = 0.1f;
-
         shape.setAsBox(0.1f, hitboxHeight, new Vector2(-hitboxWidth - 0.05f, 0), 0);
         leftSensor = new SimpleContactListener();
         body.createFixture(fixtureDef).setUserData(leftSensor);
@@ -115,7 +113,7 @@ public class Player implements Entity, PhysicsObject, Controllable {
     }
 
     private boolean onLeftWall() {
-        return right && rightSensor.hasContact();
+        return left && leftSensor.hasContact();
     }
 
     private void beginJump() {
@@ -133,7 +131,9 @@ public class Player implements Entity, PhysicsObject, Controllable {
 
     public void update(float delta) {
         // Walking logic
-        if (left || right) {
+        if (climbCooldown > 0) {
+            climbCooldown -= delta;
+        } else if (left || right) {
             impulse.set(right ? WALK_ACCEL : -WALK_ACCEL, 0).scl(body.getMass());
             impulse.scl(body.getMass());
             body.applyLinearImpulse(impulse, this.body.getPosition(), true);
@@ -147,10 +147,11 @@ public class Player implements Entity, PhysicsObject, Controllable {
             if (extendedJumpTimer > 0) {
                 // Wall jump
                 boolean onWall = onLeftWall() || onRightWall();
+                boolean firstJumpFrame = extendedJumpTimer == EXTENDED_JUMP_SECONDS;
                 float xMult = 1;
-                if (extendedJumpTimer == EXTENDED_JUMP_SECONDS && onWall) {
+                if (firstJumpFrame && onWall) {
+                    climbCooldown = EXTENDED_JUMP_SECONDS;
                     xMult = -2;
-                    left = right = false;
                 }
 
                 impulse.set(xMult * body.getLinearVelocity().x, JUMP_FORCE);

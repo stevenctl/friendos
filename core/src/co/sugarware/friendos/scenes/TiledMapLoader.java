@@ -1,6 +1,7 @@
 package co.sugarware.friendos.scenes;
 
 import co.sugarware.friendos.entities.Entity;
+import co.sugarware.friendos.entities.Player;
 import co.sugarware.friendos.entities.SimplePhysicsObject;
 import co.sugarware.friendos.sprite.StaticSprite;
 import co.sugarware.friendos.util.Geometry;
@@ -16,6 +17,8 @@ import com.badlogic.gdx.physics.box2d.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static co.sugarware.friendos.entities.Player.RAMSEY_SPRITE;
+import static co.sugarware.friendos.entities.Player.TRENT_SPRITE;
 import static co.sugarware.friendos.entities.collisions.Collisions.*;
 import static co.sugarware.friendos.util.Geometry.mapToWorldScale;
 
@@ -65,11 +68,23 @@ public class TiledMapLoader {
             String type = (String) object.getProperties().get("type");
             if ("physics_object".equals(type)) {
                 if (!(object instanceof TiledMapTileMapObject)) {
-                    Gdx.app.getApplicationLogger().error("WORLD", "Trying to load non TiledMapTileMapObject physics_object");
+                    Gdx.app.getApplicationLogger().error("WORLD", "Trying to load non TiledMapTileMapObject. Type: physics_object");
                     continue;
                 }
                 SimplePhysicsObject physicsObject = buildSimplePhysicsObject((TiledMapTileMapObject) object);
                 entities.add(physicsObject);
+            } else if ("player".equals(type)) {
+                if (!(object instanceof RectangleMapObject)) {
+                    Gdx.app.getApplicationLogger().error("WORLD", "Trying to load non TiledMapTileMapObject. Type: player");
+                    continue;
+                }
+                RectangleMapObject rmo = (RectangleMapObject) object;
+                String spriteName = Math.random() > 0.5f ? RAMSEY_SPRITE : TRENT_SPRITE;
+                if (object.getProperties().get("name") != null) {
+                    spriteName = object.getProperties().get("name").toString();
+                }
+
+                entities.add(new Player(mapToWorldScale(new Vector2(rmo.getRectangle().getX(), rmo.getRectangle().getY())), spriteName));
             }
         }
 

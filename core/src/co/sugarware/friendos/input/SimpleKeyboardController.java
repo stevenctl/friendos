@@ -32,7 +32,7 @@ public class SimpleKeyboardController implements InputProcessor {
 
     public SimpleKeyboardController(Controllable controllable, int scheme) {
         this.controllable = controllable;
-        this.keyMapping = schemes[scheme];
+        this.keyMapping = schemes[((scheme-1) + schemes.length) % schemes.length];
     }
 
     public SimpleKeyboardController(Controllable controllable) {

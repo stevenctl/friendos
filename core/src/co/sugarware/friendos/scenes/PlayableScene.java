@@ -19,15 +19,17 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 
+import java.awt.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static co.sugarware.friendos.entities.Player.RAMSEY_SPRITE;
 import static co.sugarware.friendos.entities.Player.TRENT_SPRITE;
 
 public class PlayableScene implements Scene {
-
-    private static final int NUM_PLAYERS = 2;
 
     // physics config
     private static final float GRAVITY = -100f;
@@ -38,7 +40,7 @@ public class PlayableScene implements Scene {
 
     // game state
     private List<Entity> entities;
-    private Player[] players;
+    private List<Player> players;
     private World world;
 
     // map
@@ -58,38 +60,12 @@ public class PlayableScene implements Scene {
         world = new World(new Vector2(0, GRAVITY), false);
         world.setContactListener(new FixtureDelegateContactListener());
 
-        // setup each player
-        players = new Player[NUM_PLAYERS];
-        cameras = new OrthographicCamera[NUM_PLAYERS];
-        fbos = new FrameBuffer[NUM_PLAYERS];
-        InputMultiplexer input = new InputMultiplexer();
-        Gdx.input.setInputProcessor(input);
-
-        for (int i = 0; i < NUM_PLAYERS; i++) {
-            players[i] = new Player(new Vector2(11 * (i + 1), 70), (i + 1) % 2 == 1 ? RAMSEY_SPRITE : TRENT_SPRITE);
-
-            // register in scene
-            entities.add(players[i]);
-
-            // register inputs
-            input.addProcessor(new SimpleKeyboardController(players[i], i));
-
-            // setup camera
-            OrthographicCamera cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
-            cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);
-            cameras[i] = cam;
-
-            // setup split-screen fbo
-            fbos[i] = new FrameBuffer(Pixmap.Format.RGBA8888, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight(), false);
-        }
-
-
         map = new TmxMapLoader().load("tilemaps/test.tmx");
         TiledMapLoader.loadCollisionBodies(map, world);
         entities.addAll(TiledMapLoader.loadEntities(map));
+        setupPlayers();
+
         mapRenderer = new OrthogonalTiledMapRenderer(map, 0.5f);
-
-
         sb = new SpriteBatch();
 
         debugRenderer = new Box2DDebugRenderer();
@@ -103,6 +79,47 @@ public class PlayableScene implements Scene {
         }
     }
 
+    private void setupPlayers() {
+        // setup each player
+        players = new ArrayList<>();
+        Set<Entity> extras = new HashSet<Entity>();
+        for (Entity e : entities) {
+            if (e instanceof Player) {
+                if (players.size() < 2) {
+                    players.add((Player) e);
+                } else {
+                    extras.add(e);
+                }
+            }
+        }
+
+        for(Entity e : extras) {
+            e.dispose();
+            entities.remove(e);
+        }
+        Gdx.app.getApplicationLogger().error("WORLD", "Removed " + extras.size() + " extra players. ");
+
+
+        cameras = new OrthographicCamera[players.size()];
+        fbos = new FrameBuffer[players.size()];
+        InputMultiplexer input = new InputMultiplexer();
+        Gdx.input.setInputProcessor(input);
+
+        for (int i = 0; i < players.size(); i++) {
+            // register inputs
+            input.addProcessor(new SimpleKeyboardController(players.get(i), i));
+
+            // setup camera
+            OrthographicCamera cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
+            cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);
+            cameras[i] = cam;
+
+            // setup split-screen fbo
+            fbos[i] = new FrameBuffer(Pixmap.Format.RGBA8888, Gdx.graphics.getWidth() / players.size(), Gdx.graphics.getHeight(), false);
+        }
+
+    }
+
     @Override
     public void update(float delta) {
         world.step(delta, 20, 20);
@@ -110,13 +127,13 @@ public class PlayableScene implements Scene {
             e.update(delta);
         }
 
-        for (int i = 0; i < players.length; i++) {
+        for (int i = 0; i < players.size(); i++) {
             OrthographicCamera cam = cameras[i];
-            Player player = players[i];
+            Player player = players.get(i);
 
             cam.position.set(
                     Math.max(cam.viewportWidth / 2, player.getPosition().x),
-                    Math.max(cam.viewportHeight /2 , player.getPosition().y),
+                    Math.max(cam.viewportHeight / 2, player.getPosition().y),
                     0
             );
             cam.update();
