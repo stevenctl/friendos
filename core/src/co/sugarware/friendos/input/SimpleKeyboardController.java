@@ -11,14 +11,14 @@ public class SimpleKeyboardController implements InputProcessor {
     private final Controllable controllable;
     private final Map<Integer, Control> keyMapping;
 
-    private static final Map<Integer, Control> ALTERNATE_KEY_MAPPING = new HashMap<Integer, Control>() {{
+    private static final Map<Integer, Control> ARROW_KEY_MAPPING = new HashMap<Integer, Control>() {{
         put(Input.Keys.RIGHT, Control.Right);
         put(Input.Keys.LEFT, Control.Left);
         put(Input.Keys.UP, Control.Jump);
     }};
 
 
-    private static final Map<Integer, Control> DEFAULT_KEY_MAPPING = new HashMap<Integer, Control>() {{
+    private static final Map<Integer, Control> WASD_KEY_MAPPING = new HashMap<Integer, Control>() {{
         put(Input.Keys.D, Control.Right);
         put(Input.Keys.A, Control.Left);
         put(Input.Keys.W, Control.Jump);
@@ -26,8 +26,8 @@ public class SimpleKeyboardController implements InputProcessor {
 
     @SuppressWarnings("unchecked")
     private static final Map<Integer, Control>[] schemes = new Map[]{
-            DEFAULT_KEY_MAPPING,
-            ALTERNATE_KEY_MAPPING
+            ARROW_KEY_MAPPING,
+            WASD_KEY_MAPPING,
     };
 
     public SimpleKeyboardController(Controllable controllable, int scheme) {
