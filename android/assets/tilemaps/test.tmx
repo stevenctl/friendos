@@ -80,8 +80,8 @@
   <object id="27" x="300" y="540" width="20" height="60"/>
  </objectgroup>
  <objectgroup id="11" name="Entities">
-  <object id="16" type="player" x="80" y="500" width="20" height="20"/>
-  <object id="26" type="player" x="500" y="500" width="20" height="20"/>
+  <object id="16" type="player-nat" x="80" y="500" width="20" height="20"/>
+  <object id="26" type="player-trent" x="500" y="500" width="20" height="20"/>
   <object id="29" type="skeleton" x="300" y="505" width="20" height="20"/>
  </objectgroup>
 </map>

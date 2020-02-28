@@ -106,7 +106,7 @@ public class PlayableScene implements Scene {
 
             // setup camera
             OrthographicCamera cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
-            cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);
+            cam.position.set(cam.viewportWidth / 3f, cam.viewportHeight / 3f, 0);
             cameras[i] = cam;
 
             // setup split-screen fbo
@@ -145,7 +145,7 @@ public class PlayableScene implements Scene {
 
             fbo.begin();
 
-            Gdx.gl.glClearColor(i + 1, i, i - 1, 1);
+            Gdx.gl.glClearColor(0,0,0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
             mapRenderer.setView(cam);

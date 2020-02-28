@@ -77,10 +77,17 @@ public class TiledMapLoader {
                 }
                 SimplePhysicsObject physicsObject = buildSimplePhysicsObject((TiledMapTileMapObject) object);
                 entities.add(physicsObject);
-            } else if ("player".equals(type)) {
+            } else if (type != null && type.startsWith("player")) {
                 RectangleMapObject rmo = validateRectangleObject(object, type);
                 if (rmo == null) continue;
-                String spriteName = Math.random() > 0.5f ? TRENT_SPRITE : RAMSEY_SPRITE;
+                int idx = (int) (Math.random() * Player.SPRITES.size());
+                String spriteName = Player.SPRITES.values().toArray(new String[0])[idx];
+                if (type.contains("-")) {
+                    String[] names = type.split("-");
+                    if (names.length > 1 && Player.SPRITES.containsKey(names[1])) {
+                        spriteName = Player.SPRITES.get(names[1]);
+                    }
+                }
                 entities.add(new Player(mapToWorldScale(new Vector2(rmo.getRectangle().getX(), rmo.getRectangle().getY())), spriteName));
             } else if ("skeleton".equals(type)) {
                 RectangleMapObject rmo = validateRectangleObject(object, type);
