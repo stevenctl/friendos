@@ -19,15 +19,10 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 
-import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static co.sugarware.friendos.entities.Player.RAMSEY_SPRITE;
-import static co.sugarware.friendos.entities.Player.TRENT_SPRITE;
 
 public class PlayableScene implements Scene {
 

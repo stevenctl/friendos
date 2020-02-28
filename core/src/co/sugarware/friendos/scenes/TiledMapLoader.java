@@ -1,6 +1,7 @@
 package co.sugarware.friendos.scenes;
 
 import co.sugarware.friendos.entities.Entity;
+import co.sugarware.friendos.entities.HumanoidEnemy;
 import co.sugarware.friendos.entities.Player;
 import co.sugarware.friendos.entities.SimplePhysicsObject;
 import co.sugarware.friendos.sprite.StaticSprite;
@@ -61,7 +62,10 @@ public class TiledMapLoader {
         }
     }
 
+
     static List<Entity> loadEntities(TiledMap map) {
+        // TODO(slandow) - DRY this up
+
         List<Entity> entities = new ArrayList<>();
         MapObjects objects = map.getLayers().get(ENTITIES_LAYER).getObjects();
         for (MapObject object : objects) {
@@ -74,21 +78,27 @@ public class TiledMapLoader {
                 SimplePhysicsObject physicsObject = buildSimplePhysicsObject((TiledMapTileMapObject) object);
                 entities.add(physicsObject);
             } else if ("player".equals(type)) {
-                if (!(object instanceof RectangleMapObject)) {
-                    Gdx.app.getApplicationLogger().error("WORLD", "Trying to load non TiledMapTileMapObject. Type: player");
-                    continue;
-                }
-                RectangleMapObject rmo = (RectangleMapObject) object;
-                String spriteName = Math.random() > 0.5f ? RAMSEY_SPRITE : TRENT_SPRITE;
-                if (object.getProperties().get("name") != null) {
-                    spriteName = object.getProperties().get("name").toString();
-                }
-
+                RectangleMapObject rmo = validateRectangleObject(object, type);
+                if (rmo == null) continue;
+                String spriteName = Math.random() > 0.5f ? TRENT_SPRITE : RAMSEY_SPRITE;
                 entities.add(new Player(mapToWorldScale(new Vector2(rmo.getRectangle().getX(), rmo.getRectangle().getY())), spriteName));
+            } else if ("skeleton".equals(type)) {
+                RectangleMapObject rmo = validateRectangleObject(object, type);
+                if (rmo == null) continue;
+                entities.add(new HumanoidEnemy(mapToWorldScale(new Vector2(rmo.getRectangle().getX(), rmo.getRectangle().getY())), HumanoidEnemy.SKELETON_SPRITE));
             }
         }
 
         return entities;
+    }
+
+    private static RectangleMapObject validateRectangleObject(MapObject object, String type) {
+        if (!(object instanceof RectangleMapObject)) {
+            Gdx.app.getApplicationLogger().error("WORLD", "Trying to load non TiledMapTileMapObject. Type: " + type);
+            return null;
+        }
+
+        return (RectangleMapObject) object;
     }
 
     private static SimplePhysicsObject buildSimplePhysicsObject(TiledMapTileMapObject object) {
