@@ -27,6 +27,10 @@ public class HumanoidEnemy extends Humanoid implements ContactListener {
         }
     }
 
+    private void attack() {
+        // TODO
+    }
+
     @Override
     public void endContact(Contact contact) {
 
