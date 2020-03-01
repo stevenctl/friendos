@@ -30,8 +30,9 @@ public class PlayableScene implements Scene {
     private static final float GRAVITY = -100f;
 
     // viewport config
-    private static final float CAMERA_HEIGHT = 100;
-    private static final float CAMERA_WIDTH = CAMERA_HEIGHT * ((Gdx.graphics.getWidth() / 2f) / (float) Gdx.graphics.getHeight());
+    private static final float CAMERA_HEIGHT = 50;
+    // TODO(slandow) make width variable to support different # of players
+    private static final float CAMERA_WIDTH = CAMERA_HEIGHT * ((Gdx.graphics.getWidth() /* / 2f */) / (float) Gdx.graphics.getHeight());
 
     // game state
     private List<Entity> entities;
@@ -106,7 +107,8 @@ public class PlayableScene implements Scene {
 
             // setup camera
             OrthographicCamera cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
-            cam.position.set(cam.viewportWidth / 3f, cam.viewportHeight / 3f, 0);
+            // pointlessly set camera to the middle of the screen (players should take control of cam pos)
+            cam.position.set(cam.viewportWidth / 2f, cam.viewportHeight / 2f, 0);
             cameras[i] = cam;
 
             // setup split-screen fbo
@@ -145,7 +147,7 @@ public class PlayableScene implements Scene {
 
             fbo.begin();
 
-            Gdx.gl.glClearColor(0,0,0, 1);
+            Gdx.gl.glClearColor(30,30,30, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
             mapRenderer.setView(cam);
@@ -166,9 +168,10 @@ public class PlayableScene implements Scene {
         sb.setProjectionMatrix(identity);
         sb.begin();
         for (int i = 0; i < fbos.length; i++) {
+            // TODO(slandow) make size variable to support different # of players
             sb.draw(
                     fbos[i].getColorBufferTexture(),
-                    -1 + i, 1f, 1, -2
+                    -1 + i, 1f, 2, -2
             );
         }
         sb.end();
