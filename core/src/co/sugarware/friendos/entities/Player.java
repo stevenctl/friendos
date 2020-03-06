@@ -32,13 +32,7 @@ public class Player extends Humanoid {
                 // Wall jump
                 boolean onWall = (onLeftWall() || onRightWall()) && !onFloor();
                 boolean firstJumpFrame = extendedJumpTimer == EXTENDED_JUMP_SECONDS - delta;
-                if (onWall) {
-                    System.out.println(extendedJumpTimer);
-                }
                 if (firstJumpFrame && onWall) {
-                    System.out.println(onLeftWall());
-                    System.out.println(onRightWall());
-                    System.out.println("----");
                     walkCooldown = EXTENDED_JUMP_SECONDS;
                     float dir = onLeftWall() ? 1 : -1;
                     impulse.set(2 * dir * WALK_ACCEL, body.getLinearVelocity().y);
