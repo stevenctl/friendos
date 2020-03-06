@@ -11,12 +11,14 @@ public class Player extends Humanoid {
     public static final String RAMSEY_SPRITE = "sprites/ramsey.json";
     public static final String TRENT_SPRITE = "sprites/trent.json";
     public static final String NAT_SPRITE = "sprites/nat.json";
+    public static final String STOVE_SPRITE = "sprites/stove.json";
     public static final Map<String, String> SPRITES = new HashMap<>();
 
     static {
         SPRITES.put("ramsey", RAMSEY_SPRITE);
         SPRITES.put("trent", TRENT_SPRITE);
         SPRITES.put("nat", NAT_SPRITE);
+        SPRITES.put("stove", STOVE_SPRITE);
     }
 
 
